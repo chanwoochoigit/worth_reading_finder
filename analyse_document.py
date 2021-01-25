@@ -4,7 +4,7 @@ import sys
 from joblib import load
 import numpy as np
 import pandas as pd
-# from create_vocab import list_2d_to_nparray
+from create_vocab import list_2d_to_nparray
 
 """helper function to convert clause to BOW vector"""
 
@@ -77,12 +77,12 @@ x = np.load('clause_vector.npy')
 vocab = np.load('vocab.npy')
 model = load_model('10000_12/best_model.hdf5')
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-# clauses_vector = list_2d_to_nparray(vectorise_document(clauses=input_clauses, vocab=vocab))
+clauses_vector = list_2d_to_nparray(vectorise_document(clauses=input_clauses, vocab=vocab))
 # np.save('verizon.npy',clauses_vector)
 
 """""""""""""""""""""""load and preprocess vectorised document text file"""""""""""""""""""""""
-verizon = np.load('verizon.npy')
-verizon_processed = preprocess_document(verizon)
+# verizon = np.load('verizon.npy')
+verizon_processed = preprocess_document(clauses_vector)
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 predictions = model.predict(verizon_processed)

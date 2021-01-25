@@ -157,7 +157,7 @@ if __name__ == '__main__':
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     """""""""""""do anova feature selection and reshape y to be a 2d array to make it work in keras"""""""""""""
-    fvalue_selector = SelectKBest(f_classif, k=10000)
+    fvalue_selector = SelectKBest(f_classif, k=12000)
     x_selected = fvalue_selector.fit_transform(x_resampled, y_resampled)
     dump(fvalue_selector, 'fselector.bin', compress=True)
     y_2d = list_2d_to_nparray(to_sqaured(y_resampled))
@@ -166,7 +166,7 @@ if __name__ == '__main__':
     """""""""""""""""""""""""""""""callbacks and training set test set division"""""""""""""""""""""""""""""""
     X_train, X_test, y_train, y_test = train_test_split(x_selected, y_2d, test_size=0.2, random_state=42)
     sensitive_callback = SensitivitySpecificityCallback((X_test, y_test))
-    mcp_save = ModelCheckpoint('8000_12/best_model.hdf5', save_best_only=True, monitor='val_loss', mode='min')
+    mcp_save = ModelCheckpoint('12000_12/best_model.hdf5', save_best_only=True, monitor='val_loss', mode='min')
     earlyStopping = EarlyStopping(monitor='val_loss', patience=10, verbose=0, mode='min')
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     print(X_train.shape)
@@ -177,7 +177,7 @@ if __name__ == '__main__':
     print(X_test)
     print(y_test)
     # go_baseline_training(X_train, X_test, y_train, y_test, callback=[sensitive_callback, mcp_save, earlyStopping])
-    # go_training(X_train, X_test, y_train, y_test, callback=[sensitive_callback, mcp_save, earlyStopping])
+    go_training(X_train, X_test, y_train, y_test, callback=[sensitive_callback, mcp_save, earlyStopping])
 
     # """"""""""""""""""""""" evaluate model """""""""""""""""""""""""""""""""
     # model = load_model('10000_12/best_model.hdf5')
