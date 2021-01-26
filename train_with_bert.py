@@ -1,5 +1,4 @@
 import math
-
 import bert
 import sentencepiece
 from numpy import random
