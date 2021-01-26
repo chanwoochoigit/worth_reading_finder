@@ -55,11 +55,11 @@ def read_predictions(predictions):
     print("This document is "+str(how_standard)+"% standard")
     return np.array(results)
 
-def store_results(document, results):
+def store_results(document, results, filename):
     classified_df = pd.DataFrame()
     classified_df['clause'] = document
     classified_df['class'] = results
-    classified_df.to_csv('classified_result.csv')
+    classified_df.to_csv(filename+'_classified_result.csv')
 
 in_file = sys.argv[1]
 print(in_file)
@@ -75,17 +75,17 @@ with open(in_file, 'r') as file:
 x = np.load('clause_vector.npy')
 # y = encode_binary_labels(np.load('classes.npy', allow_pickle=True))
 vocab = np.load('vocab.npy')
-model = load_model('10000_12/best_model.hdf5')
+model = load_model('12000_12/best_model.hdf5')
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 clauses_vector = list_2d_to_nparray(vectorise_document(clauses=input_clauses, vocab=vocab))
 # np.save('verizon.npy',clauses_vector)
 
 """""""""""""""""""""""load and preprocess vectorised document text file"""""""""""""""""""""""
 # verizon = np.load('verizon.npy')
-verizon_processed = preprocess_document(clauses_vector)
+document_processed = preprocess_document(clauses_vector)
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-predictions = model.predict(verizon_processed)
+predictions = model.predict(document_processed)
 results = read_predictions(predictions)
 print(results.shape)
-store_results(input_clauses, results)
+store_results(input_clauses, results, in_file[:-4])

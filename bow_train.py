@@ -177,7 +177,7 @@ if __name__ == '__main__':
     print(X_test)
     print(y_test)
     # go_baseline_training(X_train, X_test, y_train, y_test, callback=[sensitive_callback, mcp_save, earlyStopping])
-    go_training(X_train, X_test, y_train, y_test, callback=[sensitive_callback, mcp_save, earlyStopping])
+    # go_training(X_train, X_test, y_train, y_test, callback=[sensitive_callback, mcp_save, earlyStopping])
 
     # """"""""""""""""""""""" evaluate model """""""""""""""""""""""""""""""""
     # model = load_model('10000_12/best_model.hdf5')
