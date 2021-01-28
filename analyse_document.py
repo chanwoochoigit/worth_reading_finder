@@ -1,3 +1,5 @@
+import argparse
+
 from sklearn.feature_selection import SelectKBest, f_classif
 from tensorflow.keras.models import load_model
 import sys
@@ -61,31 +63,46 @@ def store_results(document, results, filename):
     classified_df['class'] = results
     classified_df.to_csv(filename+'_classified_result.csv')
 
-in_file = sys.argv[1]
-print(in_file)
+if __name__ == '__main__':
 
-input_clauses = []
+    # take flags
+    parser = argparse.ArgumentParser()
+    parser.add_argument("alertness", type=str)
+    parser.add_argument("filename", type=str)
+    args = parser.parse_args()
 
-with open(in_file, 'r') as file:
-    for line in file:
-        if line != '' and line.isspace() is False:
-            input_clauses.append(line)
+    # check flag validity
+    valid_alertness = ["alice", "bob", "charlie"]
+    alertness = args.alertness
 
-"""""""""""""""""""""""""""""""""""""load x, vocab and model"""""""""""""""""""""""""""""""""""""
-x = np.load('clause_vector.npy')
-# y = encode_binary_labels(np.load('classes.npy', allow_pickle=True))
-vocab = np.load('vocab.npy')
-model = load_model('12000_12/best_model.hdf5')
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-clauses_vector = list_2d_to_nparray(vectorise_document(clauses=input_clauses, vocab=vocab))
-# np.save('verizon.npy',clauses_vector)
+    if alertness not in valid_alertness:
+        sys.exit("Invalid argument!")
 
-"""""""""""""""""""""""load and preprocess vectorised document text file"""""""""""""""""""""""
-# verizon = np.load('verizon.npy')
-document_processed = preprocess_document(clauses_vector)
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    filename = args.filename
+    print(filename)
 
-predictions = model.predict(document_processed)
-results = read_predictions(predictions)
-print(results.shape)
-store_results(input_clauses, results, in_file[:-4])
+    input_clauses = []
+
+    with open(filename, 'r') as file:
+        for line in file:
+            if line != '' and line.isspace() is False:
+                input_clauses.append(line)
+
+    """""""""""""""""""""""""""""""""""""load x, vocab and model"""""""""""""""""""""""""""""""""""""
+    x = np.load('clause_vector.npy')
+    # y = encode_binary_labels(np.load('classes.npy', allow_pickle=True))
+    vocab = np.load('vocab.npy')
+    model = load_model('12000_12/best_model.hdf5')
+    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    clauses_vector = list_2d_to_nparray(vectorise_document(clauses=input_clauses, vocab=vocab))
+    # np.save('verizon.npy',clauses_vector)
+
+    """""""""""""""""""""""load and preprocess vectorised document text file"""""""""""""""""""""""
+    # verizon = np.load('verizon.npy')
+    document_processed = preprocess_document(clauses_vector)
+    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+    predictions = model.predict(document_processed)
+    results = read_predictions(predictions)
+    print(results.shape)
+    store_results(input_clauses, results, filename[:-4])

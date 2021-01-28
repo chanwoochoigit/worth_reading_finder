@@ -1,11 +1,8 @@
 import pandas as pd
 import numpy as np
 import itertools
-
-data = pd.read_csv("data.csv")
-clauses = data["clause"]
-classes = data["class"]
-clauses_by_word = []
+import argparse
+import sys
 
 def list_2d_to_nparray(list_2d):
     new_array = []
@@ -14,7 +11,29 @@ def list_2d_to_nparray(list_2d):
         new_array.append(new_line)
     return np.asarray(new_array)
 
+def get_path(alertness, filename):
+    return "training_data/"+alertness+"/"+filename+"_"+alertness+".npy"
+
 if __name__ == '__main__':
+    #take flags
+    parser = argparse.ArgumentParser()
+    parser.add_argument("alertness",type=str)
+    args = parser.parse_args()
+
+    #check flag validity
+    valid_alertness = ["alice", "bob", "charlie"]
+    alertness = args.alertness
+
+    if alertness not in valid_alertness:
+        sys.exit("Invalid argument!")
+
+    data_path = "training_data/"+alertness+"/data_"+alertness+".csv"
+
+    data = pd.read_csv(data_path)
+    clauses = data["clause"]
+    classes = data["class"]
+    clauses_by_word = []
+    print(classes)
     clauses_counter = 0
     for line in clauses:
         print("proceeding...{}/{}".format(clauses_counter, len(clauses)))
@@ -32,13 +51,12 @@ if __name__ == '__main__':
         cbw_counter += 1
 
 
-
     vocabulary = np.array(list(itertools.chain.from_iterable(vocabulary)))
     print(vocabulary.shape)
 
     clauses_by_word = list_2d_to_nparray(clauses_by_word)
     print(clauses_by_word.shape)
-    np.save('classes.npy', classes)
-    np.save('clauses.npy', clauses_by_word)
-    np.save('vocab.npy', vocabulary)
+    np.save(get_path(alertness, "classes"), classes)
+    np.save(get_path(alertness, "clauses"), clauses_by_word)
+    np.save(get_path(alertness, "vocab"), vocabulary)
 

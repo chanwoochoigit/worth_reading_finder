@@ -1,3 +1,5 @@
+import argparse
+
 import numpy as np
 from imblearn.over_sampling import SMOTE
 from sklearn.feature_selection import SelectKBest, f_classif
@@ -12,7 +14,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 import sys
 from tensorflow.python.keras.callbacks import ModelCheckpoint, EarlyStopping
-from create_vocab import list_2d_to_nparray
+from create_vocab import list_2d_to_nparray, get_path
 from joblib import dump
 
 class SensitivitySpecificityCallback(Callback):
@@ -138,9 +140,22 @@ def go_training(X_train, X_test, y_train, y_test, callback):
     y_test = np.argmax(y_test, axis=1)
 
 if __name__ == '__main__':
+
+    # take flags
+    parser = argparse.ArgumentParser()
+    parser.add_argument("alertness", type=str)
+    args = parser.parse_args()
+
+    # check flag validity
+    valid_alertness = ["alice", "bob", "charlie"]
+    alertness = args.alertness
+
+    if alertness not in valid_alertness:
+        sys.exit("Invalid argument!")
+
     """""""""""""""""""""""""""""""""""""load x and y"""""""""""""""""""""""""""""""""""""
-    x = np.load('clause_vector.npy')
-    y = np.load('classes.npy', allow_pickle=True)
+    x = np.load(get_path(alertness,"clause_vector"))
+    y = np.load(get_path(alertness,"classes"), allow_pickle=True)
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     """""""""""""""""""""""""""""""""""""""normalise x and encode y"""""""""""""""""""""""""""""
@@ -150,11 +165,11 @@ if __name__ == '__main__':
     dump(scaler, 'scaler.bin', compress=True)
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-    """""""""""""""""""""""""""""""""""""""""""smote oversampling to avoid biases"""""""""""""""""""""""""""""""""""""""""""
+    """""""""""""""""""""""""""""""""""""""""""smote oversampling to avoid biases"""""""""""""""""""""""""""""""""""""""
     x = list_2d_to_nparray(x_scaled)
     y = np.array(y_encoded)
     x_resampled, y_resampled = SMOTE().fit_resample(x, y)
-    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     """""""""""""do anova feature selection and reshape y to be a 2d array to make it work in keras"""""""""""""
     fvalue_selector = SelectKBest(f_classif, k=12000)
@@ -177,7 +192,7 @@ if __name__ == '__main__':
     print(X_test)
     print(y_test)
     # go_baseline_training(X_train, X_test, y_train, y_test, callback=[sensitive_callback, mcp_save, earlyStopping])
-    # go_training(X_train, X_test, y_train, y_test, callback=[sensitive_callback, mcp_save, earlyStopping])
+    go_training(X_train, X_test, y_train, y_test, callback=[sensitive_callback, mcp_save, earlyStopping])
 
     # """"""""""""""""""""""" evaluate model """""""""""""""""""""""""""""""""
     # model = load_model('10000_12/best_model.hdf5')
