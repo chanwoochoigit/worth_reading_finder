@@ -2,7 +2,7 @@ import argparse
 import sys
 import numpy as np
 import pandas as pd
-from create_vocab import list_2d_to_nparray,get_path
+from utils import list_2d_to_nparray, get_npy_path
 
 
 if __name__ == '__main__':
@@ -19,8 +19,8 @@ if __name__ == '__main__':
     if alertness not in valid_alertness:
         sys.exit("Invalid argument!")
 
-    vocab = np.load(get_path(alertness, "vocab"))
-    clauses = np.load(get_path(alertness, "clauses"), allow_pickle=True)
+    vocab = np.load(get_npy_path(alertness, "vocab"))
+    clauses = np.load(get_npy_path(alertness, "clauses"), allow_pickle=True)
     clause_vector = []
 
     clause_counter = 0
@@ -36,6 +36,6 @@ if __name__ == '__main__':
 
     clause_vector = list_2d_to_nparray(clause_vector)
     print(clause_vector)
-    np.save(get_path(alertness, "clause_vector"),clause_vector)
+    np.save(get_npy_path(alertness, "clause_vector"),clause_vector)
 
 

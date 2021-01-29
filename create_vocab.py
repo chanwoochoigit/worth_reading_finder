@@ -3,16 +3,7 @@ import numpy as np
 import itertools
 import argparse
 import sys
-
-def list_2d_to_nparray(list_2d):
-    new_array = []
-    for line in list_2d:
-        new_line = np.asarray(line)
-        new_array.append(new_line)
-    return np.asarray(new_array)
-
-def get_path(alertness, filename):
-    return "training_data/"+alertness+"/"+filename+"_"+alertness+".npy"
+from utils import get_npy_path, list_2d_to_nparray
 
 if __name__ == '__main__':
     #take flags
@@ -56,7 +47,7 @@ if __name__ == '__main__':
 
     clauses_by_word = list_2d_to_nparray(clauses_by_word)
     print(clauses_by_word.shape)
-    np.save(get_path(alertness, "classes"), classes)
-    np.save(get_path(alertness, "clauses"), clauses_by_word)
-    np.save(get_path(alertness, "vocab"), vocabulary)
+    np.save(get_npy_path(alertness, "classes"), classes)
+    np.save(get_npy_path(alertness, "clauses"), clauses_by_word)
+    np.save(get_npy_path(alertness, "vocab"), vocabulary)
 

@@ -14,7 +14,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 import sys
 from tensorflow.python.keras.callbacks import ModelCheckpoint, EarlyStopping
-from create_vocab import list_2d_to_nparray, get_path
+from utils import list_2d_to_nparray, get_npy_path, get_bin_path, get_bow_model_path
 from joblib import dump
 
 class SensitivitySpecificityCallback(Callback):
@@ -35,12 +35,6 @@ class SensitivitySpecificityCallback(Callback):
         print('Confusion matrix:\n', c)
         print('sensitivity', c[0, 0] / (c[0, 1] + c[0, 0]))
         print('specificity', c[1, 1] / (c[1, 1] + c[1, 0]))
-
-def get_model_path(alertness):
-    return "models/"+alertness+"_model/"+alertness+"_model_bow"
-
-def get_bin_path(alertness, name):
-    return "training_data/"+alertness+"/"+name+"_"+alertness+".bin"
 
 def to_sqaured(label_1d):
     squared_labels = []
@@ -160,10 +154,10 @@ if __name__ == '__main__':
         sys.exit("Invalid argument!")
 
     """""""""""""""""""""""""""""""""""""load x and y"""""""""""""""""""""""""""""""""""""
-    print(get_path(alertness,"clause_vector"))
-    print(get_path(alertness,"classes"))
-    x = np.load(get_path(alertness,"clause_vector"))
-    y = np.load(get_path(alertness,"classes"), allow_pickle=True)
+    print(get_npy_path(alertness,"clause_vector"))
+    print(get_npy_path(alertness,"classes"))
+    x = np.load(get_npy_path(alertness,"clause_vector"))
+    y = np.load(get_npy_path(alertness,"classes"), allow_pickle=True)
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     """""""""""""""""""""""""""""""""""""""normalise x and encode y"""""""""""""""""""""""""""""
@@ -189,7 +183,7 @@ if __name__ == '__main__':
     """""""""""""""""""""""""""""""callbacks and training set test set division"""""""""""""""""""""""""""""""
     X_train, X_test, y_train, y_test = train_test_split(x_selected, y_2d, test_size=0.2, random_state=42)
     sensitive_callback = SensitivitySpecificityCallback((X_test, y_test))
-    mcp_save = ModelCheckpoint(get_model_path(alertness), save_best_only=True, monitor='val_loss', mode='min')
+    mcp_save = ModelCheckpoint(get_bow_model_path(alertness), save_best_only=True, monitor='val_loss', mode='min')
     earlyStopping = EarlyStopping(monitor='val_loss', patience=10, verbose=0, mode='min')
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     print(X_train.shape)

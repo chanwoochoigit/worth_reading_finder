@@ -7,7 +7,7 @@ from joblib import load
 import numpy as np
 import pandas as pd
 from create_vocab import list_2d_to_nparray
-from bow_train import get_model_path, get_path
+from utils import get_bow_model_path, get_npy_path, get_bin_path
 
 """helper function to convert clause to BOW vector"""
 
@@ -26,20 +26,19 @@ def vectorise_document(clauses, vocab):
         clause_counter += 1
     return bow_vectors
 
-def preprocess_document(document):
+def preprocess_document(document, alertness):
     """""""""""""""""""""standardise vectorised document"""""""""""""""""""""
-    scaler = load('scaler.bin')
+    scaler = load(get_bin_path(alertness, "scaler"))
     document_scaled = scaler.fit_transform(document)
     # print(document_scaled)
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     """""""""""""""do feature selection on the vectorised test document"""""""""""
-    fselector = load('fselector.bin')
-    aa_scaled_selected = fselector.transform(document_scaled)
-    test_document = aa_scaled_selected
-    print(test_document.shape)
+    fselector = load(get_bin_path(alertness, "fselector"))
+    document_scaled_selected = fselector.transform(document_scaled)
+    print(document_scaled_selected.shape)
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    return test_document
+    return document_scaled_selected
 
 def read_predictions(predictions):
     results = []
@@ -90,18 +89,18 @@ if __name__ == '__main__':
                 input_clauses.append(line)
 
     """""""""""""""""""""""""""""""""""""load x, vocab and model"""""""""""""""""""""""""""""""""""""
-    x = np.load(get_path(alertness, "clause_vector"))
+    x = np.load(get_npy_path(alertness, "clause_vector"))
     # y = encode_binary_labels(np.load('classes.npy', allow_pickle=True))
-    vocab = np.load(get_path(alertness, "vocab"))
-    print(get_model_path(alertness))
-    model = load_model(get_model_path(alertness))
+    vocab = np.load(get_npy_path(alertness, "vocab"))
+    print(get_bow_model_path(alertness))
+    model = load_model(get_bow_model_path(alertness))
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     clauses_vector = list_2d_to_nparray(vectorise_document(clauses=input_clauses, vocab=vocab))
     # np.save('verizon.npy',clauses_vector)
 
     """""""""""""""""""""""load and preprocess vectorised document text file"""""""""""""""""""""""
     # verizon = np.load('verizon.npy')
-    document_processed = preprocess_document(clauses_vector)
+    document_processed = preprocess_document(document=clauses_vector, alertness=alertness)
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     predictions = model.predict(document_processed)
