@@ -112,9 +112,9 @@ if __name__ == '__main__':
     DNN_UNITS = 256
     OUTPUT_CLASSES = 2
 
-    DROPOUT_RATE = 0.2
+    DROPOUT_RATE = 0.3
 
-    NUM_EPOCHS = 10
+    NUM_EPOCHS = 30
     """"""""""""""""""""""""""""""""""""""""""
 
     #tokenise clauses

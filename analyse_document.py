@@ -7,6 +7,7 @@ from joblib import load
 import numpy as np
 import pandas as pd
 from create_vocab import list_2d_to_nparray
+from bow_train import get_model_path, get_path
 
 """helper function to convert clause to BOW vector"""
 
@@ -89,10 +90,11 @@ if __name__ == '__main__':
                 input_clauses.append(line)
 
     """""""""""""""""""""""""""""""""""""load x, vocab and model"""""""""""""""""""""""""""""""""""""
-    x = np.load('clause_vector.npy')
+    x = np.load(get_path(alertness, "clause_vector"))
     # y = encode_binary_labels(np.load('classes.npy', allow_pickle=True))
-    vocab = np.load('vocab.npy')
-    model = load_model('12000_12/best_model.hdf5')
+    vocab = np.load(get_path(alertness, "vocab"))
+    print(get_model_path(alertness))
+    model = load_model(get_model_path(alertness))
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     clauses_vector = list_2d_to_nparray(vectorise_document(clauses=input_clauses, vocab=vocab))
     # np.save('verizon.npy',clauses_vector)

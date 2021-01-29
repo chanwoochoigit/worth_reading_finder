@@ -39,6 +39,9 @@ class SensitivitySpecificityCallback(Callback):
 def get_model_path(alertness):
     return "models/"+alertness+"_model/"+alertness+"_model_bow"
 
+def get_bin_path(alertness, name):
+    return "training_data/"+alertness+"/"+name+"_"+alertness+".bin"
+
 def to_sqaured(label_1d):
     squared_labels = []
     for lb in label_1d:
@@ -167,7 +170,7 @@ if __name__ == '__main__':
     scaler = preprocessing.StandardScaler()
     x_scaled = scaler.fit_transform(x, y)
     y_encoded = encode_binary_labels(y) #encode labels
-    dump(scaler, 'scaler.bin', compress=True)
+    dump(scaler, get_bin_path(alertness, "scaler"), compress=True)
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     """""""""""""""""""""""""""""""""""""""""""smote oversampling to avoid biases"""""""""""""""""""""""""""""""""""""""
@@ -179,7 +182,7 @@ if __name__ == '__main__':
     """""""""""""do anova feature selection and reshape y to be a 2d array to make it work in keras"""""""""""""
     fvalue_selector = SelectKBest(f_classif, k=12000)
     x_selected = fvalue_selector.fit_transform(x_resampled, y_resampled)
-    dump(fvalue_selector, 'fselector.bin', compress=True)
+    dump(fvalue_selector, get_bin_path(alertness, "fselector"), compress=True)
     y_2d = list_2d_to_nparray(to_sqaured(y_resampled))
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
