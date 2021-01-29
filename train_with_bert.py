@@ -11,11 +11,13 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import save_model, load_model
-from utils import get_bert_model_path
+from utils import get_bert_model_path, encode_binary_labels, list_2d_to_nparray, get_max_length
+from sklearn.model_selection import train_test_split
+from imblearn.over_sampling import SMOTE
+
 
 def tokenise_clauses(clause):
     return tokenizer.convert_tokens_to_ids(tokenizer.tokenize(clause))
-
 
 
 class TEXT_MODEL(tf.keras.Model):
@@ -104,11 +106,29 @@ if __name__ == '__main__':
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 
-    #tokenise clauses
+    """""""""""""""""""""""""""""""""""""""tokenise clauses with BERT tokeniser"""""""""""""""""""""""""""""""""""""""
     tokenised_clauses = [tokenise_clauses(clause) for clause in clauses]
+    max_length = get_max_length(tokenised_clauses)
+    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-    print(tokenised_clauses)
-    print(y)
+    """""""""""""""""""""""""""""""""""pad clauses with 0 to make them equal in length"""""""""""""""""""""""""""""""""""
+    padded_clauses = []
+    for clause in tokenised_clauses:
+        padded_clause = clause
+        while len(padded_clause) < max_length:
+            padded_clause.append(0)
+        padded_clauses.append(padded_clause)
+    padded_clauses = list_2d_to_nparray(padded_clauses)
+    print(padded_clauses.shape)
+    print(y.shape)
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+    """""""""""""""""""""""""""""""""""""""""""smote oversampling to avoid biases"""""""""""""""""""""""""""""""""""""""
+    x_resampled, y_resampled = SMOTE().fit_resample(padded_clauses, y)
+    print(x_resampled.shape)
+    print(y_resampled.shape)
+    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
     """""""""""""hyper-parameters"""""""""""""
     BATCH_SIZE = 16
 
@@ -123,47 +143,31 @@ if __name__ == '__main__':
     NUM_EPOCHS = 30
     """"""""""""""""""""""""""""""""""""""""""
 
-    # """""""""""""""get length of each clause to find the longest one to make all clauses to have equal length"""""""""""""""
-    # clauses_with_len = [[clause, y[i], len(clause)] for i, clause in enumerate(tokenised_clauses)]
-    # random.shuffle(clauses_with_len)
-    # clauses_with_len.sort(key=lambda x: x[2])
-    # sorted_clauses_labels = [(cls_label[0], cls_label[1]) for cls_label in clauses_with_len]
-    # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    #
-    # """""""""""""""""""""""""""""""""""""""""pad batches based on the batch size"""""""""""""""""""""""""""""""""""""""""
-    # processed_dataset = tf.data.Dataset.from_generator(lambda: sorted_clauses_labels, output_types=(tf.int32, tf.int32))
-    # batched_dataset = processed_dataset.padded_batch(BATCH_SIZE, padded_shapes=((None, ), ()))
-    # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    #
-    # """""""""""""""""""""""""""""""""""""""""""divide training and test dataset"""""""""""""""""""""""""""""""""""""""""""
-    # TOTAL_BATCHES = math.ceil(len(sorted_clauses_labels) / BATCH_SIZE)
-    # TEST_BATCHES = TOTAL_BATCHES // 20
-    # batched_dataset.shuffle(TOTAL_BATCHES)
-    # test_data = batched_dataset.take(TEST_BATCHES)
-    # training_data = batched_dataset.skip(TEST_BATCHES)
-    # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    #
-    # classifier = TEXT_MODEL(vocabulary_size=VOCAB_LENGTH,
-    #                         embedding_dimensions=EMB_DIM,
-    #                         cnn_filters=CNN_FILTERS,
-    #                         dnn_units=DNN_UNITS,
-    #                         model_output_classes=OUTPUT_CLASSES,
-    #                         dropout_rate=DROPOUT_RATE)
-    #
-    # """"""""""""""""""""""""""""compile classes; here we only use binary as there are 2 classes"""""""""""""""""""""""""""""
-    # if OUTPUT_CLASSES == 2:
-    #     classifier.compile(loss="binary_crossentropy",
-    #                        optimizer="adam",
-    #                        metrics=["accuracy"])
-    # else:
-    #     classifier.compile(loss="sparse_categorical_crossentropy",
-    #                        optimizer="adam",
-    #                        metrics=["sparse_categorical_accuracy"])
-    # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    #
-    # classifier.fit(training_data, epochs=NUM_EPOCHS)
-    #
-    # classifier.save(get_bert_model_path(alertness), save_format='tf')
-    #
-    # results = classifier.evaluate(test_data)
-    # print(results)
+    classifier = TEXT_MODEL(vocabulary_size=VOCAB_LENGTH,
+                            embedding_dimensions=EMB_DIM,
+                            cnn_filters=CNN_FILTERS,
+                            dnn_units=DNN_UNITS,
+                            model_output_classes=OUTPUT_CLASSES,
+                            dropout_rate=DROPOUT_RATE)
+
+    """"""""""""""""""""""""""""compile classes; here we only use binary as there are 2 classes"""""""""""""""""""""""""""""
+    if OUTPUT_CLASSES == 2:
+        classifier.compile(loss="binary_crossentropy",
+                           optimizer="adam",
+                           metrics=["accuracy"])
+    else:
+        classifier.compile(loss="sparse_categorical_crossentropy",
+                           optimizer="adam",
+                           metrics=["sparse_categorical_accuracy"])
+    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+    """"""""""""""""""""""""""""""""""""""""divide training & test set and train"""""""""""""""""""""""""""""""""""""""""
+    X_train, X_test, y_train, y_test = train_test_split(x_resampled, y_resampled, test_size=0.2, random_state=42)
+
+    classifier.fit(x=X_train, y=y_train, epochs=NUM_EPOCHS)
+    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+    classifier.save(get_bert_model_path(alertness), save_format='tf')
+
+    results = classifier.evaluate(x=X_test, y=y_test)
+    print(results)

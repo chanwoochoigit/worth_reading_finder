@@ -14,7 +14,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 import sys
 from tensorflow.python.keras.callbacks import ModelCheckpoint, EarlyStopping
-from utils import list_2d_to_nparray, get_npy_path, get_bin_path, get_bow_model_path
+from utils import list_2d_to_nparray, get_npy_path, get_bin_path, get_bow_model_path, encode_binary_labels
 from joblib import dump
 
 class SensitivitySpecificityCallback(Callback):
@@ -47,22 +47,6 @@ def to_sqaured(label_1d):
             sys.exit("Wrong input in the supposed label array!")
 
     return squared_labels
-
-
-def encode_binary_labels(y):
-    encoded_labels = []
-    labels = []
-    [labels.append(x) for x in y if x not in labels]
-    print(labels)
-    for label in y:
-        if label == labels[0]:
-            encoded_labels.append(0)
-        elif label == labels[1]:
-            encoded_labels.append(1)
-        else:
-            print(label)
-            sys.exit("wrong label input!")
-    return encoded_labels
 
 def go_baseline_training(X_train, X_test, y_train, y_test, callback):
     model = Sequential()
