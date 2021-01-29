@@ -1,3 +1,5 @@
+import argparse
+
 from sklearn.feature_selection import SelectKBest, f_classif
 from tensorflow.keras.models import load_model
 import sys
@@ -5,6 +7,7 @@ from joblib import load
 import numpy as np
 import pandas as pd
 from create_vocab import list_2d_to_nparray
+from utils import get_bow_model_path, get_npy_path, get_bin_path, store_results, read_predictions
 
 """helper function to convert clause to BOW vector"""
 
@@ -23,69 +26,58 @@ def vectorise_document(clauses, vocab):
         clause_counter += 1
     return bow_vectors
 
-def preprocess_document(document):
+def preprocess_document(document, alertness):
     """""""""""""""""""""standardise vectorised document"""""""""""""""""""""
-    scaler = load('scaler.bin')
+    scaler = load(get_bin_path(alertness, "scaler"))
     document_scaled = scaler.fit_transform(document)
     # print(document_scaled)
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     """""""""""""""do feature selection on the vectorised test document"""""""""""
-    fselector = load('fselector.bin')
-    aa_scaled_selected = fselector.transform(document_scaled)
-    test_document = aa_scaled_selected
-    print(test_document.shape)
+    fselector = load(get_bin_path(alertness, "fselector"))
+    document_scaled_selected = fselector.transform(document_scaled)
+    print(document_scaled_selected.shape)
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    return test_document
+    return document_scaled_selected
 
-def read_predictions(predictions):
-    results = []
-    standard_counter = 0
-    worth_counter = 0
-    for pd in predictions:
-        if pd[0] > pd[1]:
-            results.append("standard_trivial")
-            standard_counter += 1
-        elif pd[0] < pd[1]:
-            results.append("worth_reading")
-            worth_counter += 1
-        else:
-            sys.exit("Wrong input suspected!")
-    how_standard = round(standard_counter / (standard_counter + worth_counter),4) * 100
-    print("This document is "+str(how_standard)+"% standard")
-    return np.array(results)
 
-def store_results(document, results, filename):
-    classified_df = pd.DataFrame()
-    classified_df['clause'] = document
-    classified_df['class'] = results
-    classified_df.to_csv(filename+'_classified_result.csv')
+if __name__ == '__main__':
 
-in_file = sys.argv[1]
-print(in_file)
+    # take flags
+    parser = argparse.ArgumentParser()
+    parser.add_argument("alertness", type=str)
+    parser.add_argument("filename", type=str)
+    args = parser.parse_args()
 
-input_clauses = []
+    # check flag validity
+    valid_alertness = ["alice", "bob", "charlie"]
+    alertness = args.alertness
 
-with open(in_file, 'r') as file:
-    for line in file:
-        if line != '' and line.isspace() is False:
-            input_clauses.append(line)
+    if alertness not in valid_alertness:
+        sys.exit("Invalid argument!")
 
-"""""""""""""""""""""""""""""""""""""load x, vocab and model"""""""""""""""""""""""""""""""""""""
-x = np.load('clause_vector.npy')
-# y = encode_binary_labels(np.load('classes.npy', allow_pickle=True))
-vocab = np.load('vocab.npy')
-model = load_model('12000_12/best_model.hdf5')
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-clauses_vector = list_2d_to_nparray(vectorise_document(clauses=input_clauses, vocab=vocab))
-# np.save('verizon.npy',clauses_vector)
+    filename = args.filename
+    print(filename)
 
-"""""""""""""""""""""""load and preprocess vectorised document text file"""""""""""""""""""""""
-# verizon = np.load('verizon.npy')
-document_processed = preprocess_document(clauses_vector)
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    input_clauses = []
 
-predictions = model.predict(document_processed)
-results = read_predictions(predictions)
-print(results.shape)
-store_results(input_clauses, results, in_file[:-4])
+    with open(filename, 'r') as file:
+        for line in file:
+            if line != '' and line.isspace() is False:
+                input_clauses.append(line)
+
+    """""""""""""""""""""""""""""""""""""load vocab, model and clause vector"""""""""""""""""""""""""""""""""""""
+    vocab = np.load(get_npy_path(alertness, "vocab"))
+    model = load_model(get_bow_model_path(alertness))
+    clauses_vector = list_2d_to_nparray(vectorise_document(clauses=input_clauses, vocab=vocab))
+    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+    """""""""""""""""""""""load and preprocess vectorised document text file"""""""""""""""""""""""
+    # verizon = np.load('verizon.npy')
+    document_processed = preprocess_document(document=clauses_vector, alertness=alertness)
+    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+    predictions = model.predict(document_processed)
+    results = read_predictions(predictions, "bow")
+    print(results.shape)
+    store_results(input_clauses, results, filename[:-4], "bow")

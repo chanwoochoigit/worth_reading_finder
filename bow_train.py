@@ -1,3 +1,5 @@
+import argparse
+
 import numpy as np
 from imblearn.over_sampling import SMOTE
 from sklearn.feature_selection import SelectKBest, f_classif
@@ -12,7 +14,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 import sys
 from tensorflow.python.keras.callbacks import ModelCheckpoint, EarlyStopping
-from create_vocab import list_2d_to_nparray
+from utils import list_2d_to_nparray, get_npy_path, get_bin_path, get_bow_model_path, encode_binary_labels
 from joblib import dump
 
 class SensitivitySpecificityCallback(Callback):
@@ -45,22 +47,6 @@ def to_sqaured(label_1d):
             sys.exit("Wrong input in the supposed label array!")
 
     return squared_labels
-
-
-def encode_binary_labels(y):
-    encoded_labels = []
-    labels = []
-    [labels.append(x) for x in y if x not in labels]
-    print(labels)
-    for label in y:
-        if label == labels[0]:
-            encoded_labels.append(0)
-        elif label == labels[1]:
-            encoded_labels.append(1)
-        else:
-            print(label)
-            sys.exit("wrong label input!")
-    return encoded_labels
 
 def go_baseline_training(X_train, X_test, y_train, y_test, callback):
     model = Sequential()
@@ -138,35 +124,50 @@ def go_training(X_train, X_test, y_train, y_test, callback):
     y_test = np.argmax(y_test, axis=1)
 
 if __name__ == '__main__':
+
+    # take flags
+    parser = argparse.ArgumentParser()
+    parser.add_argument("alertness", type=str)
+    args = parser.parse_args()
+
+    # check flag validity
+    valid_alertness = ["alice", "bob", "charlie"]
+    alertness = args.alertness
+
+    if alertness not in valid_alertness:
+        sys.exit("Invalid argument!")
+
     """""""""""""""""""""""""""""""""""""load x and y"""""""""""""""""""""""""""""""""""""
-    x = np.load('clause_vector.npy')
-    y = np.load('classes.npy', allow_pickle=True)
+    print(get_npy_path(alertness,"clause_vector"))
+    print(get_npy_path(alertness,"classes"))
+    x = np.load(get_npy_path(alertness,"clause_vector"))
+    y = np.load(get_npy_path(alertness,"classes"), allow_pickle=True)
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     """""""""""""""""""""""""""""""""""""""normalise x and encode y"""""""""""""""""""""""""""""
     scaler = preprocessing.StandardScaler()
     x_scaled = scaler.fit_transform(x, y)
     y_encoded = encode_binary_labels(y) #encode labels
-    dump(scaler, 'scaler.bin', compress=True)
+    dump(scaler, get_bin_path(alertness, "scaler"), compress=True)
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-    """""""""""""""""""""""""""""""""""""""""""smote oversampling to avoid biases"""""""""""""""""""""""""""""""""""""""""""
+    """""""""""""""""""""""""""""""""""""""""""smote oversampling to avoid biases"""""""""""""""""""""""""""""""""""""""
     x = list_2d_to_nparray(x_scaled)
     y = np.array(y_encoded)
     x_resampled, y_resampled = SMOTE().fit_resample(x, y)
-    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     """""""""""""do anova feature selection and reshape y to be a 2d array to make it work in keras"""""""""""""
     fvalue_selector = SelectKBest(f_classif, k=12000)
     x_selected = fvalue_selector.fit_transform(x_resampled, y_resampled)
-    dump(fvalue_selector, 'fselector.bin', compress=True)
+    dump(fvalue_selector, get_bin_path(alertness, "fselector"), compress=True)
     y_2d = list_2d_to_nparray(to_sqaured(y_resampled))
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     """""""""""""""""""""""""""""""callbacks and training set test set division"""""""""""""""""""""""""""""""
     X_train, X_test, y_train, y_test = train_test_split(x_selected, y_2d, test_size=0.2, random_state=42)
     sensitive_callback = SensitivitySpecificityCallback((X_test, y_test))
-    mcp_save = ModelCheckpoint('12000_12/best_model.hdf5', save_best_only=True, monitor='val_loss', mode='min')
+    mcp_save = ModelCheckpoint(get_bow_model_path(alertness), save_best_only=True, monitor='val_loss', mode='min')
     earlyStopping = EarlyStopping(monitor='val_loss', patience=10, verbose=0, mode='min')
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     print(X_train.shape)
@@ -177,7 +178,7 @@ if __name__ == '__main__':
     print(X_test)
     print(y_test)
     # go_baseline_training(X_train, X_test, y_train, y_test, callback=[sensitive_callback, mcp_save, earlyStopping])
-    # go_training(X_train, X_test, y_train, y_test, callback=[sensitive_callback, mcp_save, earlyStopping])
+    go_training(X_train, X_test, y_train, y_test, callback=[sensitive_callback, mcp_save, earlyStopping])
 
     # """"""""""""""""""""""" evaluate model """""""""""""""""""""""""""""""""
     # model = load_model('10000_12/best_model.hdf5')
