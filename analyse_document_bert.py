@@ -14,7 +14,6 @@ from utils import get_bert_model_path, tokenise_clauses, get_max_length_path, ma
     store_results
 
 if __name__ == '__main__':
-
     # take flags
     parser = argparse.ArgumentParser()
     parser.add_argument("alertness", type=str)
@@ -47,7 +46,7 @@ if __name__ == '__main__':
     """""""""""""""""""""""""""download and load bert tokeniser + vocabulary"""""""""""""""""""""""""""
     BertTokenizer = bert.bert_tokenization.FullTokenizer
     bert_layer = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/1",
-                                trainable=False)
+                                    trainable=False)
     vocabulary_file = bert_layer.resolved_object.vocab_file.asset_path.numpy()
     to_lower_case = bert_layer.resolved_object.do_lower_case.numpy()
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
