@@ -7,7 +7,7 @@ from joblib import load
 import numpy as np
 import pandas as pd
 from create_vocab import list_2d_to_nparray
-from utils import get_bow_model_path, get_npy_path, get_bin_path
+from utils import get_bow_model_path, get_npy_path, get_bin_path, store_results, read_predictions
 
 """helper function to convert clause to BOW vector"""
 
@@ -40,28 +40,6 @@ def preprocess_document(document, alertness):
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     return document_scaled_selected
 
-def read_predictions(predictions):
-    results = []
-    standard_counter = 0
-    worth_counter = 0
-    for pd in predictions:
-        if pd[0] > pd[1]:
-            results.append("standard_trivial")
-            standard_counter += 1
-        elif pd[0] < pd[1]:
-            results.append("worth_reading")
-            worth_counter += 1
-        else:
-            sys.exit("Wrong input suspected!")
-    how_standard = round(standard_counter / (standard_counter + worth_counter),4) * 100
-    print("This document is "+str(how_standard)+"% standard")
-    return np.array(results)
-
-def store_results(document, results, filename):
-    classified_df = pd.DataFrame()
-    classified_df['clause'] = document
-    classified_df['class'] = results
-    classified_df.to_csv(filename+'_classified_result.csv')
 
 if __name__ == '__main__':
 
@@ -88,15 +66,11 @@ if __name__ == '__main__':
             if line != '' and line.isspace() is False:
                 input_clauses.append(line)
 
-    """""""""""""""""""""""""""""""""""""load x, vocab and model"""""""""""""""""""""""""""""""""""""
-    x = np.load(get_npy_path(alertness, "clause_vector"))
-    # y = encode_binary_labels(np.load('classes.npy', allow_pickle=True))
+    """""""""""""""""""""""""""""""""""""load vocab, model and clause vector"""""""""""""""""""""""""""""""""""""
     vocab = np.load(get_npy_path(alertness, "vocab"))
-    print(get_bow_model_path(alertness))
     model = load_model(get_bow_model_path(alertness))
-    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     clauses_vector = list_2d_to_nparray(vectorise_document(clauses=input_clauses, vocab=vocab))
-    # np.save('verizon.npy',clauses_vector)
+    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     """""""""""""""""""""""load and preprocess vectorised document text file"""""""""""""""""""""""
     # verizon = np.load('verizon.npy')
@@ -104,6 +78,6 @@ if __name__ == '__main__':
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     predictions = model.predict(document_processed)
-    results = read_predictions(predictions)
+    results = read_predictions(predictions, "bow")
     print(results.shape)
-    store_results(input_clauses, results, filename[:-4])
+    store_results(input_clauses, results, filename[:-4], "bow")

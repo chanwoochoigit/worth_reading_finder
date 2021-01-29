@@ -10,14 +10,10 @@ import tensorflow_hub as hub
 import pandas as pd
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.models import save_model, load_model
-from utils import get_bert_model_path, encode_binary_labels, list_2d_to_nparray, get_max_length
+# from tensorflow.keras.models import save_model, load_model
+from utils import get_bert_model_path, get_max_length, max_length_padding, tokenise_clauses
 from sklearn.model_selection import train_test_split
 from imblearn.over_sampling import SMOTE
-
-
-def tokenise_clauses(clause):
-    return tokenizer.convert_tokens_to_ids(tokenizer.tokenize(clause))
 
 
 class TEXT_MODEL(tf.keras.Model):
@@ -102,28 +98,18 @@ if __name__ == '__main__':
                                 trainable=False)
     vocabulary_file = bert_layer.resolved_object.vocab_file.asset_path.numpy()
     to_lower_case = bert_layer.resolved_object.do_lower_case.numpy()
-    tokenizer = BertTokenizer(vocabulary_file, to_lower_case)
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 
     """""""""""""""""""""""""""""""""""""""tokenise clauses with BERT tokeniser"""""""""""""""""""""""""""""""""""""""
-    tokenised_clauses = [tokenise_clauses(clause) for clause in clauses]
+    tokenizer = BertTokenizer(vocabulary_file, to_lower_case)
+    tokenised_clauses = [tokenise_clauses(clause, tokenizer) for clause in clauses]
     max_length = get_max_length(tokenised_clauses)
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-    """""""""""""""""""""""""""""""""""pad clauses with 0 to make them equal in length"""""""""""""""""""""""""""""""""""
-    padded_clauses = []
-    for clause in tokenised_clauses:
-        padded_clause = clause
-        while len(padded_clause) < max_length:
-            padded_clause.append(0)
-        padded_clauses.append(padded_clause)
-    padded_clauses = list_2d_to_nparray(padded_clauses)
-    print(padded_clauses.shape)
-    print(y.shape)
-    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     """""""""""""""""""""""""""""""""""""""""""smote oversampling to avoid biases"""""""""""""""""""""""""""""""""""""""
+    padded_clauses = max_length_padding(tokenised_clauses)
     x_resampled, y_resampled = SMOTE().fit_resample(padded_clauses, y)
     print(x_resampled.shape)
     print(y_resampled.shape)
@@ -167,7 +153,10 @@ if __name__ == '__main__':
     classifier.fit(x=X_train, y=y_train, epochs=NUM_EPOCHS)
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
+    """"""""""""""""""""""""""""""""""""""""""""""save model and max length"""""""""""""""""""""""""""""""""""""""""""""
     classifier.save(get_bert_model_path(alertness), save_format='tf')
+    with open(get_bert_model_path(alertness)+"/max_clause_len.txt", "w") as text_file:
+        text_file.write("max_length: "+str(max_length))
 
     results = classifier.evaluate(x=X_test, y=y_test)
     print(results)
