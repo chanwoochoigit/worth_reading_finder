@@ -15,6 +15,8 @@ from tensorflow.keras.models import save_model, load_model
 def tokenise_clauses(clause):
     return tokenizer.convert_tokens_to_ids(tokenizer.tokenize(clause))
 
+def get_bert_model_path(alertness):
+    return "models/"+alertness+"_model/"+alertness+"_model_bert"
 
 class TEXT_MODEL(tf.keras.Model):
 
@@ -86,7 +88,7 @@ if __name__ == '__main__':
         sys.exit("Invalid argument!")
 
     """""""""""""""""""""""""""""""""""load data and assign variables"""""""""""""""""""""""""""""""""""
-    data = pd.read_csv("training_data/"+alertness+"/data_"+alertness+".npy")
+    data = pd.read_csv("training_data/"+alertness+"/data_"+alertness+".csv")
     clauses = data["clause"]
     y = data["class"]
     y = np.array(list(map(lambda x: 1 if x == "worth_reading" else 0, y)))
@@ -102,7 +104,7 @@ if __name__ == '__main__':
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     """""""""""""hyper-parameters"""""""""""""
-    BATCH_SIZE = 32
+    BATCH_SIZE = 16
 
     VOCAB_LENGTH = len(tokenizer.vocab)
     EMB_DIM = 200
@@ -158,7 +160,7 @@ if __name__ == '__main__':
 
     classifier.fit(training_data, epochs=NUM_EPOCHS)
 
-    classifier.save('bert_model', save_format='tf')
+    classifier.save(get_bert_model_path(alertness), save_format='tf')
 
     results = classifier.evaluate(test_data)
     print(results)

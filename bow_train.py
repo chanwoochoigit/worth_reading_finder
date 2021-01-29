@@ -36,6 +36,9 @@ class SensitivitySpecificityCallback(Callback):
         print('sensitivity', c[0, 0] / (c[0, 1] + c[0, 0]))
         print('specificity', c[1, 1] / (c[1, 1] + c[1, 0]))
 
+def get_model_path(alertness):
+    return "models/"+alertness+"_model/"+alertness+"_model_bow"
+
 def to_sqaured(label_1d):
     squared_labels = []
     for lb in label_1d:
@@ -154,6 +157,8 @@ if __name__ == '__main__':
         sys.exit("Invalid argument!")
 
     """""""""""""""""""""""""""""""""""""load x and y"""""""""""""""""""""""""""""""""""""
+    print(get_path(alertness,"clause_vector"))
+    print(get_path(alertness,"classes"))
     x = np.load(get_path(alertness,"clause_vector"))
     y = np.load(get_path(alertness,"classes"), allow_pickle=True)
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -181,7 +186,7 @@ if __name__ == '__main__':
     """""""""""""""""""""""""""""""callbacks and training set test set division"""""""""""""""""""""""""""""""
     X_train, X_test, y_train, y_test = train_test_split(x_selected, y_2d, test_size=0.2, random_state=42)
     sensitive_callback = SensitivitySpecificityCallback((X_test, y_test))
-    mcp_save = ModelCheckpoint('12000_12/best_model.hdf5', save_best_only=True, monitor='val_loss', mode='min')
+    mcp_save = ModelCheckpoint(get_model_path(alertness), save_best_only=True, monitor='val_loss', mode='min')
     earlyStopping = EarlyStopping(monitor='val_loss', patience=10, verbose=0, mode='min')
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     print(X_train.shape)
