@@ -66,4 +66,8 @@ if __name__ == '__main__':
     print(results.shape)
     store_results(input_clauses, results, filename[:-4], "bert")
 
-
+    worth_indices = []
+    for i in range(len(results)):
+        if results[i] == "worth_reading":
+            worth_indices.append(i)
+    print(worth_indices)
