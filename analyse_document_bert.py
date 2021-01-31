@@ -12,7 +12,8 @@ import tensorflow_hub as hub
 # import tensorflow as tf
 from tensorflow.keras.models import save_model, load_model
 from utils import get_bert_model_path, tokenise_clauses, get_max_length_path, max_length_padding, read_predictions, \
-    store_results
+    store_results, take_input, get_standard_ratio
+
 
 def clauses_to_json_string(clauses, worth_indices):
     input_clauses = clauses
@@ -29,16 +30,18 @@ def clauses_to_json_string(clauses, worth_indices):
     except:
         print("I/O error: Failed to save final_result to json! Get this shit sorted.")
 
-def analyse(json_object):
+def analyse(json_string):
 
     # json_object example:
     # {
     #     "alertness": "alice",
     #     "title": "verizon",
-    #     "test": "blah blah blah"
+    #     "text": "blah blah blah"
     # }
+    """""""""""""""""""""""""""""""check and convert json string to json object"""""""""""""""""""""""""""""""
+    json_object = take_input(json_string)
 
-    # check flag validity
+    # check parameter validity
     valid_alertness = ["alice", "bob", "charlie"]
     alertness = json_object['alertness']
 
@@ -46,6 +49,8 @@ def analyse(json_object):
         sys.exit("Invalid argument!")
 
     policy_text = json_object['text']
+    if policy_text == '':
+        sys.exit("Text is empty!")
 
     input_clauses = []
     for line in policy_text.split('\n'):
@@ -82,11 +87,17 @@ def analyse(json_object):
     print(results)
     store_results(input_clauses, results, json_object['title'].replace(' ',''), "bert")
 
+    standard_ratio = get_standard_ratio(predictions, "bert")
+
+    """""""""""""""get indices for worth reading clauses"""""""""""""""
     worth_indices = []
     for i in range(len(results)):
         if results[i] == "worth_reading":
             worth_indices.append(i)
 
-    return json.loads(clauses_to_json_string(input_clauses, worth_indices))
+    clauses_json = json.loads(clauses_to_json_string(input_clauses, worth_indices))
+    clauses_json['standard_ratio'] = standard_ratio
+    print(clauses_json)
+    return clauses_json
 
 

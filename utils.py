@@ -74,11 +74,11 @@ def read_predictions(predictions, mode):
     standard_counter = 0
     worth_counter = 0
     if mode == "bow":
-        for pd in predictions:
-            if pd[0] > pd[1]:
+        for pred in predictions:
+            if pred[0] > pred[1]:
                 results.append("standard_trivial")
                 standard_counter += 1
-            elif pd[0] < pd[1]:
+            elif pred[0] < pred[1]:
                 results.append("worth_reading")
                 worth_counter += 1
             else:
@@ -86,11 +86,11 @@ def read_predictions(predictions, mode):
         how_important = round(worth_counter / (standard_counter + worth_counter),4) * 100
         print("Ratio of worth reading clauses: "+str(how_important)+"%")
     elif mode == "bert":
-        for pd in predictions:
-            if pd[0] < 0.5:
+        for pred in predictions:
+            if pred[0] < 0.5:
                 results.append("standard_trivial")
                 standard_counter += 1
-            elif pd[0] > 0.5:
+            elif pred[0] > 0.5:
                 results.append("worth_reading")
                 worth_counter += 1
             else:
@@ -100,6 +100,34 @@ def read_predictions(predictions, mode):
     else:
         exit("Wrong mode selection!")
     return np.array(results)
+
+def get_standard_ratio(predictions, mode):
+    standard_counter = 0
+    worth_counter = 0
+    how_standard = 0
+    if mode == "bow":
+        for pred in predictions:
+            if pred[0] > pred[1]:
+                standard_counter += 1
+            elif pred[0] < pred[1]:
+                worth_counter += 1
+            else:
+                exit("Wrong input suspected!")
+        how_important = round(worth_counter / (standard_counter + worth_counter),4) * 100
+        print("Ratio of worth reading clauses: "+str(how_important)+"%")
+    elif mode == "bert":
+        for pred in predictions:
+            if pred[0] < 0.5:
+                standard_counter += 1
+            elif pred[0] > 0.5:
+                worth_counter += 1
+            else:
+                exit("Wrong input suspected!")
+        how_standard = round(standard_counter / (standard_counter + worth_counter), 4) * 100
+        print("Ratio of standard clauses: " + str(how_standard) + "%")
+    else:
+        exit("Wrong mode selection!")
+    return how_standard
 
 def store_results(document, results, filename, mode):
     classified_df = pd.DataFrame()
