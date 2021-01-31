@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 from sys import exit
 import pandas as pd
@@ -104,3 +106,10 @@ def store_results(document, results, filename, mode):
     classified_df['clause'] = document
     classified_df['class'] = results
     classified_df.to_csv("results/"+filename+'_classified_result_'+mode+'.csv')
+
+def take_input(potential_json):
+    try:
+        json_object = json.loads(potential_json)
+        return json_object
+    except ValueError:
+        raise ValueError("The entered string is not a valid json string!")
