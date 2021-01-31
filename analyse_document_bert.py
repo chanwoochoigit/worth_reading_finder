@@ -1,41 +1,58 @@
 import argparse
+import json
 import sys
-
-import bert
-import sentencepiece
-from numpy import random
-from tensorflow.keras import layers
-import tensorflow_hub as hub
 import pandas as pd
-import numpy as np
-import tensorflow as tf
+import bert
+# import sentencepiece
+# from numpy import random
+# from tensorflow.keras import layers
+import tensorflow_hub as hub
+# import pandas as pd
+# import numpy as np
+# import tensorflow as tf
 from tensorflow.keras.models import save_model, load_model
 from utils import get_bert_model_path, tokenise_clauses, get_max_length_path, max_length_padding, read_predictions, \
     store_results
 
-if __name__ == '__main__':
-    # take flags
-    parser = argparse.ArgumentParser()
-    parser.add_argument("alertness", type=str)
-    parser.add_argument("filename", type=str)
-    args = parser.parse_args()
+def clauses_to_json_string(clauses, worth_indices):
+    input_clauses = clauses
+    for i in range(len(input_clauses)):
+        if i in worth_indices:
+            input_clauses[i] = "***"+input_clauses[i]
+
+    result_df = pd.DataFrame(input_clauses, columns=['clause'])
+    result_json = result_df.to_json()
+    try:
+        print("Successfully save final result to json.")
+        print(result_json)
+        return result_json
+    except:
+        print("I/O error: Failed to save final_result to json! Get this shit sorted.")
+
+def analyse(json_object):
+
+    # json_object example:
+    # {
+    #     "alertness": "alice",
+    #     "title": "verizon",
+    #     "test": "blah blah blah"
+    # }
 
     # check flag validity
     valid_alertness = ["alice", "bob", "charlie"]
-    alertness = args.alertness
+    alertness = json_object['alertness']
 
     if alertness not in valid_alertness:
         sys.exit("Invalid argument!")
 
-    filename = args.filename
-    print(filename)
+    policy_text = json_object['text']
 
     input_clauses = []
+    for line in policy_text.split('\n'):
+        if line != '' and line.isspace() is False:
+            input_clauses.append(line)
 
-    with open(filename, 'r') as file:
-        for line in file:
-            if line != '' and line.isspace() is False:
-                input_clauses.append(line)
+    print(input_clauses[7])
 
     """""""""""""""""""""""""""""""get maximum clause length for test data"""""""""""""""""""""""""""""""
     with open(get_max_length_path(alertness), "r") as max_len_file:
@@ -55,7 +72,6 @@ if __name__ == '__main__':
     tokenizer = BertTokenizer(vocabulary_file, to_lower_case)
     tokenised_clauses = [tokenise_clauses(clause, tokenizer) for clause in input_clauses]
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
     #padd data
     padded_clauses = max_length_padding(tokenised_clauses, max_length=max_len)
 
@@ -63,11 +79,14 @@ if __name__ == '__main__':
     predictions = model.predict(x=padded_clauses)
     print(predictions)
     results = read_predictions(predictions, "bert")
-    print(results.shape)
-    store_results(input_clauses, results, filename[:-4], "bert")
+    print(results)
+    store_results(input_clauses, results, json_object['title'].replace(' ',''), "bert")
 
     worth_indices = []
     for i in range(len(results)):
         if results[i] == "worth_reading":
             worth_indices.append(i)
-    print(worth_indices)
+
+    return json.loads(clauses_to_json_string(input_clauses, worth_indices))
+
+
