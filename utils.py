@@ -48,7 +48,6 @@ def get_max_length(x_data):
             max_length = len(x)
     return max_length
 
-
 def max_length_padding(tokenised_clauses, max_length=0):
     """""""""""""""""""""""""""""""""""pad clauses with 0 to make them equal in length"""""""""""""""""""""""""""""""""""
     if max_length == 0:
@@ -68,6 +67,13 @@ def max_length_padding(tokenised_clauses, max_length=0):
 
 def tokenise_clauses(clause, tokenizer):
     return tokenizer.convert_tokens_to_ids(tokenizer.tokenize(clause))
+
+def add_special_tokens(x_data):
+    new_x = []
+    for x in x_data:
+        new_x.append('[CLS]' + x + '[SEP]')
+
+    return new_x
 
 def read_predictions(predictions, mode):
     results = []
