@@ -86,7 +86,7 @@ if __name__ == '__main__':
     """""""""""""""""""""""""""tokenise clauses with pretrained BERT tokeniser"""""""""""""""""""""""""""
     batch_size=12
     bert_input_train = formatise_bert_input(X_train, y_train, max_length).shuffle(10000).batch(batch_size=batch_size)
-    bert_input_test = formatise_bert_input(X_test, y_test, max_length)
+    bert_input_test = formatise_bert_input(X_test, y_test, max_length).batch(batch_size=batch_size)
 
     print(bert_input_train)
     print(bert_input_test)
