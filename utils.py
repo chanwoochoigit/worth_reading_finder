@@ -38,6 +38,9 @@ def get_bow_model_path(alertness):
 def get_bert_model_path(alertness):
     return "models/"+alertness+"_model/"+alertness+"_model_bert"
 
+def get_tfm_model_path(alertness):
+    return "models/"+alertness+"_model/"+alertness+"_model_tfm"
+
 def get_max_length_path(alertness):
     return "models/"+alertness+"_model/"+alertness+"_model_bert/max_clause_len.txt"
 

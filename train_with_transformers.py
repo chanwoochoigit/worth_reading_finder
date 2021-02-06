@@ -8,8 +8,8 @@ import tensorflow_hub as hub
 import pandas as pd
 import numpy as np
 import tensorflow as tf
-# from tensorflow.keras.models import save_model, load_model
-from utils import get_bert_model_path, tokenise_clauses, add_special_tokens, list_2d_to_nparray, check_shape_compliance
+from tensorflow.keras.models import save_model, load_model
+from utils import get_bert_model_path, add_special_tokens, check_shape_compliance, get_tfm_model_path
 from sklearn.model_selection import train_test_split
 from imblearn.over_sampling import SMOTE
 from transformers import TFBertForSequenceClassification
@@ -109,35 +109,11 @@ if __name__ == '__main__':
     """""""""""""""""""""""""""""""train model using the bert tokenised dataset"""""""""""""""""""""""""""""""
     bert_history = model.fit(bert_input_train, epochs=num_epochs, validation_data=bert_input_test)
 
-    #
-    # classifier = TEXT_MODEL(vocabulary_size=VOCAB_LENGTH,
-    #                         embedding_dimensions=EMB_DIM,
-    #                         cnn_filters=CNN_FILTERS,
-    #                         dnn_units=DNN_UNITS,
-    #                         model_output_classes=OUTPUT_CLASSES,
-    #                         dropout_rate=DROPOUT_RATE)
-    #
-    # """"""""""""""""""""""""""""compile classes; here we only use binary as there are 2 classes"""""""""""""""""""""""""""""
-    # if OUTPUT_CLASSES == 2:
-    #     classifier.compile(loss="binary_crossentropy",
-    #                        optimizer="adam",
-    #                        metrics=["accuracy"])
-    # else:
-    #     classifier.compile(loss="sparse_categorical_crossentropy",
-    #                        optimizer="adam",
-    #                        metrics=["sparse_categorical_accuracy"])
-    # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    #
-    # """"""""""""""""""""""""""""""""""""""""divide training & test set and train"""""""""""""""""""""""""""""""""""""""""
-    # X_train, X_test, y_train, y_test = train_test_split(x_resampled, y_resampled, test_size=0.2, random_state=42)
-    #
-    # classifier.fit(x=X_train, y=y_train, epochs=NUM_EPOCHS)
-    # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    #
-    # """"""""""""""""""""""""""""""""""""""""""""""save model and max length"""""""""""""""""""""""""""""""""""""""""""""
-    # classifier.save(get_bert_model_path(alertness), save_format='tf')
-    # with open(get_bert_model_path(alertness)+"/max_clause_len.txt", "w") as text_file:
-    #     text_file.write("max_length: "+str(max_length))
-    #
-    # results = classifier.evaluate(x=X_test, y=y_test)
-    # print(results)
+    """""""""""""""""""""""""""""""""""""""""save model and evaluate"""""""""""""""""""""""""""""""""""""""""
+    model.save(get_tfm_model_path(alertness), save_format='tf')
+    with open(get_tfm_model_path(alertness)+"/max_clause_len.txt", 'w') as text_file:
+        text_file.write("max_length: "+str(max_length))
+
+    results = model.evaluate(x=X_test, y=y_test)
+    print(results)
+    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
