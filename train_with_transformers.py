@@ -93,7 +93,7 @@ if __name__ == '__main__':
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     """""""""""""""""""""""""""""""""set hyper-parameters and compile the model"""""""""""""""""""""""""""""""""
-    num_epochs = 3
+    num_epochs = 1
     learning_rate = 2e-5
 
     #init model
@@ -114,6 +114,6 @@ if __name__ == '__main__':
     with open(get_tfm_model_path(alertness)+"/max_clause_len.txt", 'w') as text_file:
         text_file.write("max_length: "+str(max_length))
 
-    results = model.evaluate(x=X_test, y=y_test)
+    results = model.evaluate(bert_input_test)
     print(results)
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
