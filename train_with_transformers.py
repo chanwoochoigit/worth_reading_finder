@@ -1,8 +1,6 @@
 import argparse
 import math
 import sys
-
-import bert
 import sentencepiece
 from numpy import random
 from transformers import BertTokenizer
@@ -11,15 +9,14 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 # from tensorflow.keras.models import save_model, load_model
-from utils import get_bert_model_path, get_max_length, max_length_padding, tokenise_clauses, add_special_tokens
+from utils import get_bert_model_path, tokenise_clauses, add_special_tokens, list_2d_to_nparray, check_shape_compliance
 from sklearn.model_selection import train_test_split
 from imblearn.over_sampling import SMOTE
 from transformers import TFBertForSequenceClassification
 
-def formatise_bert_input(clauses, labels):
+def formatise_bert_input(clauses, labels, max_length):
+
     tokeniser = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
-    bert_input = []
-    max_length = get_max_length(clauses)
     token_type_ids = [0] * max_length   #token types are zero because we are doing text classification not QA
 
     """""""""instances"""""""""
@@ -29,8 +26,7 @@ def formatise_bert_input(clauses, labels):
     label_list = []
 
     for i in range(len(clauses)):
-        print("processing...{}/{}".format(i,len(clauses)))
-
+        # print("processing...{}/{}".format(i,len(clauses)))
         # create input ids
         cls_tokenised = tokeniser.tokenize(clauses[i])
         input_ids = tokeniser.convert_tokens_to_ids(cls_tokenised)
@@ -44,73 +40,22 @@ def formatise_bert_input(clauses, labels):
         input_ids_list.append(input_ids_padded)
         token_type_ids_list.append(token_type_ids)
         attention_mask_list.append(attention_mask)
-        label_list.append(labels[i])
+        label_list.append([labels[i]])
 
-    return tf.data.Dataset.from_tensor_slices((input_ids_list, token_type_ids_list, attention_mask_list, label_list)).map(map_to_dict)
+    print(check_shape_compliance(input_ids_list))
+    print(check_shape_compliance(token_type_ids_list))
+    print(check_shape_compliance(attention_mask_list))
+
+    return tf.data.Dataset.from_tensor_slices((input_ids_list, attention_mask_list, token_type_ids_list, label_list)).map(map_to_dict)
 
 """""""""""""""helper function to map bert inputs to dictionary format"""""""""""""""
-def map_to_dict(token_ids, token_type_ids, attention_mask, label):
+def map_to_dict(input_ids, attention_mask, token_type_ids, label):
     return {
-            "token_ids": token_ids,
+            "input_ids": input_ids,
             "token_type_ids": token_type_ids,
             "attention_mask": attention_mask,
             }, label
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-
-class TEXT_MODEL(tf.keras.Model):
-
-    def __init__(self,
-                 vocabulary_size,
-                 embedding_dimensions=128,
-                 cnn_filters=50,
-                 dnn_units=512,
-                 model_output_classes=2,
-                 dropout_rate=0.1,
-                 training=False,
-                 name="text_model"):
-        super(TEXT_MODEL, self).__init__(name=name)
-
-        self.embedding = layers.Embedding(vocabulary_size,
-                                          embedding_dimensions)
-        self.cnn_layer1 = layers.Conv1D(filters=cnn_filters,
-                                        kernel_size=2,
-                                        padding="valid",
-                                        activation="relu")
-        self.cnn_layer2 = layers.Conv1D(filters=cnn_filters,
-                                        kernel_size=3,
-                                        padding="valid",
-                                        activation="relu")
-        self.cnn_layer3 = layers.Conv1D(filters=cnn_filters,
-                                        kernel_size=4,
-                                        padding="valid",
-                                        activation="relu")
-        self.pool = layers.GlobalMaxPool1D()
-
-        self.dense_1 = layers.Dense(units=dnn_units, activation="relu")
-        self.dropout = layers.Dropout(rate=dropout_rate)
-        if model_output_classes == 2:
-            self.last_dense = layers.Dense(units=1,
-                                           activation="sigmoid")
-        else:
-            self.last_dense = layers.Dense(units=model_output_classes,
-                                           activation="softmax")
-
-    def call(self, inputs, training):
-        l = self.embedding(inputs)
-        l_1 = self.cnn_layer1(l)
-        l_1 = self.pool(l_1)
-        l_2 = self.cnn_layer2(l)
-        l_2 = self.pool(l_2)
-        l_3 = self.cnn_layer3(l)
-        l_3 = self.pool(l_3)
-
-        concatenated = tf.concat([l_1, l_2, l_3], axis=-1)  # (batch_size, 3 * cnn_filters)
-        concatenated = self.dense_1(concatenated)
-        concatenated = self.dropout(concatenated, training)
-        model_output = self.last_dense(concatenated)
-
-        return model_output
 
 
 if __name__ == '__main__':
@@ -132,16 +77,16 @@ if __name__ == '__main__':
     clauses = data["clause"]
     clauses_with_special_tokens = add_special_tokens(clauses)
     y = data["class"]
-    y = np.array(list(map(lambda x: 1 if x == "worth_reading" else 0, y)))
+    y = list(map(lambda x: 1 if x == "worth_reading" else 0, y))
+    max_length = 250 # just set max length to be 300
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-    print(len(clauses_with_special_tokens) // 5 * 4)
-    print(len(y))
     X_train, X_test, y_train, y_test = train_test_split(clauses_with_special_tokens, y, test_size=0.2)
 
     """""""""""""""""""""""""""tokenise clauses with pretrained BERT tokeniser"""""""""""""""""""""""""""
-    bert_input_train = formatise_bert_input(X_train, y_train)
-    bert_input_test = formatise_bert_input(X_test, y_test)
+    batch_size=12
+    bert_input_train = formatise_bert_input(X_train, y_train, max_length).shuffle(10000).batch(batch_size=batch_size)
+    bert_input_test = formatise_bert_input(X_test, y_test, max_length)
 
     print(bert_input_train)
     print(bert_input_test)
@@ -155,8 +100,9 @@ if __name__ == '__main__':
     model = TFBertForSequenceClassification.from_pretrained('bert-base-uncased')
 
     optimiser = tf.keras.optimizers.Adam(learning_rate=learning_rate, epsilon=1e-08)
-    loss = tf.keras.losses.binary_crossentropy(from_logits=True)
-    metric = tf.keras.metrics.binary_accuracy('accuracy')
+
+    loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+    metric = tf.keras.metrics.SparseCategoricalAccuracy('accuracy')
     model.compile(optimizer=optimiser, loss=loss, metrics=[metric])
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 

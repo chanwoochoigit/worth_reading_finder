@@ -71,7 +71,7 @@ def tokenise_clauses(clause, tokenizer):
 def add_special_tokens(x_data):
     new_x = []
     for x in x_data:
-        new_x.append('[CLS]' + x + '[SEP]')
+        new_x.append('[CLS] ' + x + ' [SEP]')
 
     return new_x
 
@@ -140,6 +140,13 @@ def store_results(document, results, filename, mode):
     classified_df['clause'] = document
     classified_df['class'] = results
     classified_df.to_csv("results/"+filename+'_classified_result_'+mode+'.csv')
+
+def check_shape_compliance(data):
+    len_list = []
+    for line in data:
+        len_list.append(len(line))
+    # print(len_list)
+    return all(x == len_list[0] for x in len_list)
 
 def take_input(potential_json):
     try:
