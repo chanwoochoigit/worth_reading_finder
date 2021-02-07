@@ -38,6 +38,9 @@ def get_bow_model_path(alertness):
 def get_bert_model_path(alertness):
     return "models/"+alertness+"_model/"+alertness+"_model_bert"
 
+def get_tfm_model_path(alertness):
+    return "models/"+alertness+"_model/"+alertness+"_model_tfm"
+
 def get_max_length_path(alertness):
     return "models/"+alertness+"_model/"+alertness+"_model_bert/max_clause_len.txt"
 
@@ -47,7 +50,6 @@ def get_max_length(x_data):
         if len(x) > max_length:
             max_length = len(x)
     return max_length
-
 
 def max_length_padding(tokenised_clauses, max_length=0):
     """""""""""""""""""""""""""""""""""pad clauses with 0 to make them equal in length"""""""""""""""""""""""""""""""""""
@@ -68,6 +70,13 @@ def max_length_padding(tokenised_clauses, max_length=0):
 
 def tokenise_clauses(clause, tokenizer):
     return tokenizer.convert_tokens_to_ids(tokenizer.tokenize(clause))
+
+def add_special_tokens(x_data):
+    new_x = []
+    for x in x_data:
+        new_x.append('[CLS] ' + x + ' [SEP]')
+
+    return new_x
 
 def read_predictions(predictions, mode):
     results = []
@@ -134,6 +143,13 @@ def store_results(document, results, filename, mode):
     classified_df['clause'] = document
     classified_df['class'] = results
     classified_df.to_csv("results/"+filename+'_classified_result_'+mode+'.csv')
+
+def check_shape_compliance(data):
+    len_list = []
+    for line in data:
+        len_list.append(len(line))
+    # print(len_list)
+    return all(x == len_list[0] for x in len_list)
 
 def take_input(potential_json):
     try:

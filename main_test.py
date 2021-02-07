@@ -6,7 +6,6 @@ def main(json_string):
 	return analyse(json_string)
 
 if __name__ == '__main__':
-	print(sys.argv)
-	input_json = sys.argv[1:2]
-	print(input_json)
-	print(main(input_json[0]))
+	with open('frame.json') as file:
+		json_string = file.read()
+	print(main(json_string))

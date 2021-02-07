@@ -9,7 +9,7 @@ import bert
 import tensorflow_hub as hub
 # import pandas as pd
 # import numpy as np
-# import tensorflow as tf
+import tensorflow as tf
 from tensorflow.keras.models import save_model, load_model
 from utils import get_bert_model_path, tokenise_clauses, get_max_length_path, max_length_padding, read_predictions, \
     store_results, take_input, get_standard_ratio
