@@ -27,22 +27,22 @@ def encode_binary_labels(y):
     return encoded_labels
 
 def get_npy_path(alertness, filename):
-    return "/worth_reading_finder/training_data/"+alertness+"/"+filename+"_"+alertness+".npy"
+    return "training_data/"+alertness+"/"+filename+"_"+alertness+".npy"
 
 def get_bin_path(alertness, name):
-    return "/worth_reading_finder/training_data/"+alertness+"/"+name+"_"+alertness+".bin"
+    return "training_data/"+alertness+"/"+name+"_"+alertness+".bin"
 
 def get_bow_model_path(alertness):
-    return "/worth_reading_finder/models/"+alertness+"_model/"+alertness+"_model_bow"
+    return "models/"+alertness+"_model/"+alertness+"_model_bow"
 
 def get_bert_model_path(alertness):
-    return "/worth_reading_finder/models/"+alertness+"_model/"+alertness+"_model_bert"
+    return "models/"+alertness+"_model/"+alertness+"_model_bert"
 
 def get_tfm_model_path(alertness):
-    return "/worth_reading_finder/models/"+alertness+"_model/"+alertness+"_model_tfm"
+    return "models/"+alertness+"_model/"+alertness+"_model_tfm"
 
 def get_max_length_path(alertness):
-    return "/worth_reading_finder/models/"+alertness+"_model/"+alertness+"_model_bert/max_clause_len.txt"
+    return "models/"+alertness+"_model/"+alertness+"_model_bert/max_clause_len.txt"
 
 def get_max_length(x_data):
     max_length = 0
