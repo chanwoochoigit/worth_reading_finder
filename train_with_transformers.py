@@ -78,13 +78,13 @@ if __name__ == '__main__':
     clauses_with_special_tokens = add_special_tokens(clauses)
     y = data["class"]
     y = list(map(lambda x: 1 if x == "worth_reading" else 0, y))
-    max_length = 250 # just set max length to be 300
+    max_length = 250 # just set max length to be 250
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     X_train, X_test, y_train, y_test = train_test_split(clauses_with_special_tokens, y, test_size=0.2)
 
     """""""""""""""""""""""""""tokenise clauses with pretrained BERT tokeniser"""""""""""""""""""""""""""
-    batch_size=12
+    batch_size=16
     bert_input_train = formatise_bert_input(X_train, y_train, max_length).shuffle(10000).batch(batch_size=batch_size)
     bert_input_test = formatise_bert_input(X_test, y_test, max_length).batch(batch_size=batch_size)
 
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     """""""""""""""""""""""""""""""""set hyper-parameters and compile the model"""""""""""""""""""""""""""""""""
-    num_epochs = 30
+    num_epochs = 1
     learning_rate = 2e-5
 
     #init model
@@ -106,14 +106,16 @@ if __name__ == '__main__':
     model.compile(optimizer=optimiser, loss=loss, metrics=[metric])
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-    """""""""""""""""""""""""""""""train model using the bert tokenised dataset"""""""""""""""""""""""""""""""
-    bert_history = model.fit(bert_input_train, epochs=num_epochs, validation_data=bert_input_test)
-
-    """""""""""""""""""""""""""""""""""""""""save model and evaluate"""""""""""""""""""""""""""""""""""""""""
-    model.save(get_tfm_model_path(alertness), save_format='tf')
-    with open(get_tfm_model_path(alertness)+"/max_clause_len.txt", 'w') as text_file:
-        text_file.write("max_length: "+str(max_length))
-
-    results = model.evaluate(bert_input_test)
-    print(results)
-    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    # """""""""""""""""""""""""""""""train model using the bert tokenised dataset"""""""""""""""""""""""""""""""
+    # bert_history = model.fit(bert_input_train, epochs=num_epochs, validation_data=bert_input_test)
+    #
+    # """""""""""""""""""""""""""""""""""""""""save model and evaluate"""""""""""""""""""""""""""""""""""""""""
+    # # model.save(get_tfm_model_path(alertness), save_format='tf')
+    # save_model(model, get_tfm_model_path(alertness), overwrite=True, include_optimizer=True, save_format=None,
+    # signatures=None, options=None, save_traces=True)
+    # with open(get_tfm_model_path(alertness)+"/max_clause_len.txt", 'w') as text_file:
+    #     text_file.write("max_length: "+str(max_length))
+    #
+    # results = model.evaluate(bert_input_test)
+    # print(results)
+    # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
