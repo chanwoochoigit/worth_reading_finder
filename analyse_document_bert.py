@@ -54,7 +54,7 @@ def analyse(json_string):
 
     input_clauses = []
     for line in policy_text.split('\n'):
-        if line != '' and line.isspace() is False:
+        if line != '' and line != '\n' and line.isspace() is False:
             input_clauses.append(line)
 
     print(input_clauses[7])
