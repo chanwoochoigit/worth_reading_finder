@@ -84,7 +84,7 @@ if __name__ == '__main__':
     X_train, X_test, y_train, y_test = train_test_split(clauses_with_special_tokens, y, test_size=0.2)
 
     """""""""""""""""""""""""""tokenise clauses with pretrained BERT tokeniser"""""""""""""""""""""""""""
-    batch_size=16
+    batch_size=12
     bert_input_train = formatise_bert_input(X_train, y_train, max_length).shuffle(10000).batch(batch_size=batch_size)
     bert_input_test = formatise_bert_input(X_test, y_test, max_length).batch(batch_size=batch_size)
 
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     """""""""""""""""""""""""""""""""set hyper-parameters and compile the model"""""""""""""""""""""""""""""""""
-    num_epochs = 10
+    num_epochs = 30
     learning_rate = 2e-5
 
     #init model
@@ -107,11 +107,9 @@ if __name__ == '__main__':
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     """""""""""""""""""""""""""""""train model using the bert tokenised dataset"""""""""""""""""""""""""""""""
-    # bert_history = model.fit(bert_input_train, epochs=num_epochs, validation_data=bert_input_test)
     model.fit(bert_input_train, epochs=num_epochs, validation_data=bert_input_test)
 
     """""""""""""""""""""""""""""""""""""""""save model and evaluate"""""""""""""""""""""""""""""""""""""""""
-    # model.save(get_tfm_model_path(alertness), save_format='tf')
     model.save_pretrained(get_tfm_model_path(alertness))
     with open(get_tfm_model_path(alertness)+"/max_clause_len.txt", 'w') as text_file:
         text_file.write("max_length: "+str(max_length))

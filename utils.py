@@ -1,4 +1,5 @@
 import json
+import math
 
 import numpy as np
 from sys import exit
@@ -82,7 +83,7 @@ def read_predictions(predictions, mode):
     results = []
     standard_counter = 0
     worth_counter = 0
-    if mode == "bow" or mode == 'tfm':
+    if mode == "bow":
         for pred in predictions:
             if pred[0] > pred[1]:
                 results.append("standard_trivial")
@@ -106,6 +107,18 @@ def read_predictions(predictions, mode):
                 exit("Wrong input suspected!")
         how_important = round(worth_counter / (standard_counter + worth_counter), 4) * 100
         print("Ratio of worth reading clauses: " + str(how_important) + "%")
+    elif mode == 'tfm':
+        for pred in predictions:
+            if abs(pred[0]) > abs(pred[1]):
+                results.append("standard_trivial")
+                standard_counter += 1
+            elif abs(pred[0]) < abs(pred[1]):
+                results.append("worth_reading")
+                worth_counter += 1
+            else:
+                exit("Wrong input suspected!")
+        how_important = round(worth_counter / (standard_counter + worth_counter),4) * 100
+        print("Ratio of worth reading clauses: "+str(how_important)+"%")
     else:
         exit("Wrong mode selection!")
     return np.array(results)
@@ -114,7 +127,7 @@ def get_standard_ratio(predictions, mode):
     standard_counter = 0
     worth_counter = 0
     how_standard = 0
-    if mode == "bow" or "tfm":
+    if mode == "bow":
         for pred in predictions:
             if pred[0] > pred[1]:
                 standard_counter += 1
@@ -134,6 +147,16 @@ def get_standard_ratio(predictions, mode):
                 exit("Wrong input suspected!")
         how_standard = round(standard_counter / (standard_counter + worth_counter), 4) * 100
         print("Ratio of standard clauses: " + str(how_standard) + "%")
+    elif mode == 'tfm':
+        for pred in predictions:
+            if abs(pred[0]) > abs(pred[1]):
+                standard_counter += 1
+            elif abs(pred[0]) < abs(pred[1]):
+                worth_counter += 1
+            else:
+                exit("Wrong input suspected!")
+        how_standard = round(standard_counter / (standard_counter + worth_counter),4) * 100
+        print("Ratio of standard clauses: "+str(how_standard)+"%")
     else:
         exit("Wrong mode selection!")
     return how_standard

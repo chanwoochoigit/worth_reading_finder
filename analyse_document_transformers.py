@@ -49,8 +49,8 @@ def formatise_bert_input(clauses):
     # print(check_shape_compliance(attention_mask_list))
 
     # return tf.data.Dataset.from_tensor_slices((input_ids_list, attention_mask_list, token_type_ids_list)).map(map_to_dict)
-    return tf.data.Dataset.from_tensor_slices((input_ids_list)).map(map_to_dict)
-    # return tf.convert_to_tensor(input_ids_list)
+    # return tf.data.Dataset.from_tensor_slices((input_ids_list)).map(map_to_dict)
+    return input_ids_list
 
 """""""""""""""helper function to map bert inputs to dictionary format"""""""""""""""
 def map_to_dict(input_ids):
@@ -84,7 +84,7 @@ def analyse(json_string):
         sys.exit("Text is empty!")
 
     input_clauses = []
-    for line in policy_text.split('\n'):
+    for line in policy_text.replace('\n\n','\n').split('\n'):
         if line != '' and line.isspace() is False:
             input_clauses.append(line)
 
@@ -93,14 +93,15 @@ def analyse(json_string):
 
     """""""""""""""""""""""""""""""""tokenise and pad clauses"""""""""""""""""""""""""""""""""
     padded_clauses = formatise_bert_input(input_clauses)
-    print(padded_clauses)
+    # print(padded_clauses)
     """""""""""""""""""""""""""""""""""load transformers model"""""""""""""""""""""""""""""""""""
     model = TFBertForSequenceClassification.from_pretrained(get_tfm_model_path(alertness))
     predictions = model.predict(padded_clauses).logits
 
+    print(len(predictions))
     results = read_predictions(predictions, mode="tfm")
 
-    standard_ratio = get_standard_ratio(predictions, "bert")
+    standard_ratio = get_standard_ratio(predictions, "tfm")
 
     print(results)
     store_results(input_clauses, results, json_object['title'].replace(' ', ''), "tfm")
