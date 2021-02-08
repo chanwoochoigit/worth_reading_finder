@@ -82,7 +82,7 @@ def read_predictions(predictions, mode):
     results = []
     standard_counter = 0
     worth_counter = 0
-    if mode == "bow":
+    if mode == "bow" or mode == 'tfm':
         for pred in predictions:
             if pred[0] > pred[1]:
                 results.append("standard_trivial")
@@ -114,7 +114,7 @@ def get_standard_ratio(predictions, mode):
     standard_counter = 0
     worth_counter = 0
     how_standard = 0
-    if mode == "bow":
+    if mode == "bow" or "tfm":
         for pred in predictions:
             if pred[0] > pred[1]:
                 standard_counter += 1
@@ -122,8 +122,8 @@ def get_standard_ratio(predictions, mode):
                 worth_counter += 1
             else:
                 exit("Wrong input suspected!")
-        how_important = round(worth_counter / (standard_counter + worth_counter),4) * 100
-        print("Ratio of worth reading clauses: "+str(how_important)+"%")
+        how_standard = round(standard_counter / (standard_counter + worth_counter), 4) * 100
+        print("Ratio of standard clauses: " + str(how_standard) + "%")
     elif mode == "bert":
         for pred in predictions:
             if pred[0] < 0.5:
@@ -157,3 +157,18 @@ def take_input(potential_json):
         return json_object
     except ValueError:
         raise ValueError("The entered string is not a valid json string!")
+
+def clauses_to_json_string(clauses, worth_indices):
+    input_clauses = clauses
+    for i in range(len(input_clauses)):
+        if i in worth_indices:
+            input_clauses[i] = "***"+input_clauses[i]
+
+    result_df = pd.DataFrame(input_clauses, columns=['clause'])
+    result_json = result_df.to_json()
+    try:
+        print("Successfully save final result to json.")
+        print(result_json)
+        return result_json
+    except:
+        print("I/O error: Failed to save final_result to json! Get this shit sorted.")

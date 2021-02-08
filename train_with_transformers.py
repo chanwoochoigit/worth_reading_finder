@@ -93,7 +93,7 @@ if __name__ == '__main__':
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     """""""""""""""""""""""""""""""""set hyper-parameters and compile the model"""""""""""""""""""""""""""""""""
-    num_epochs = 1
+    num_epochs = 10
     learning_rate = 2e-5
 
     #init model
@@ -106,16 +106,16 @@ if __name__ == '__main__':
     model.compile(optimizer=optimiser, loss=loss, metrics=[metric])
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-    # """""""""""""""""""""""""""""""train model using the bert tokenised dataset"""""""""""""""""""""""""""""""
+    """""""""""""""""""""""""""""""train model using the bert tokenised dataset"""""""""""""""""""""""""""""""
     # bert_history = model.fit(bert_input_train, epochs=num_epochs, validation_data=bert_input_test)
-    #
-    # """""""""""""""""""""""""""""""""""""""""save model and evaluate"""""""""""""""""""""""""""""""""""""""""
-    # # model.save(get_tfm_model_path(alertness), save_format='tf')
-    # save_model(model, get_tfm_model_path(alertness), overwrite=True, include_optimizer=True, save_format=None,
-    # signatures=None, options=None, save_traces=True)
-    # with open(get_tfm_model_path(alertness)+"/max_clause_len.txt", 'w') as text_file:
-    #     text_file.write("max_length: "+str(max_length))
-    #
-    # results = model.evaluate(bert_input_test)
-    # print(results)
-    # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    model.fit(bert_input_train, epochs=num_epochs, validation_data=bert_input_test)
+
+    """""""""""""""""""""""""""""""""""""""""save model and evaluate"""""""""""""""""""""""""""""""""""""""""
+    # model.save(get_tfm_model_path(alertness), save_format='tf')
+    model.save_pretrained(get_tfm_model_path(alertness))
+    with open(get_tfm_model_path(alertness)+"/max_clause_len.txt", 'w') as text_file:
+        text_file.write("max_length: "+str(max_length))
+
+    results = model.evaluate(bert_input_test)
+    print(results)
+    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

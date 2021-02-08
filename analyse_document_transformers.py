@@ -1,4 +1,5 @@
 import argparse
+import json
 import math
 import sys
 from transformers import BertTokenizer
@@ -6,8 +7,9 @@ import tensorflow_hub as hub
 import pandas as pd
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.models import save_model, load_model
-from utils import get_bert_model_path, add_special_tokens, check_shape_compliance, get_tfm_model_path, take_input
+from transformers import BertForSequenceClassification
+from utils import get_bert_model_path, add_special_tokens, check_shape_compliance, get_tfm_model_path, take_input, \
+    read_predictions, get_standard_ratio, clauses_to_json_string, store_results
 from sklearn.model_selection import train_test_split
 from imblearn.over_sampling import SMOTE
 from transformers import TFBertForSequenceClassification
@@ -47,8 +49,8 @@ def formatise_bert_input(clauses):
     # print(check_shape_compliance(attention_mask_list))
 
     # return tf.data.Dataset.from_tensor_slices((input_ids_list, attention_mask_list, token_type_ids_list)).map(map_to_dict)
-    # return tf.data.Dataset.from_tensor_slices((input_ids_list)).map(map_to_dict)
-    return tf.convert_to_tensor(input_ids_list)
+    return tf.data.Dataset.from_tensor_slices((input_ids_list)).map(map_to_dict)
+    # return tf.convert_to_tensor(input_ids_list)
 
 """""""""""""""helper function to map bert inputs to dictionary format"""""""""""""""
 def map_to_dict(input_ids):
@@ -91,12 +93,27 @@ def analyse(json_string):
 
     """""""""""""""""""""""""""""""""tokenise and pad clauses"""""""""""""""""""""""""""""""""
     padded_clauses = formatise_bert_input(input_clauses)
-
+    print(padded_clauses)
     """""""""""""""""""""""""""""""""""load transformers model"""""""""""""""""""""""""""""""""""
-    model = load_model(get_tfm_model_path(alertness))
-    for line in padded_clauses:
-        print(line)
-        print(model(line))
-        break
-    # # predictions = model.predict(x=padded_clauses)
-    # print(predictions)
+    model = TFBertForSequenceClassification.from_pretrained(get_tfm_model_path(alertness))
+    predictions = model.predict(padded_clauses).logits
+
+    results = read_predictions(predictions, mode="tfm")
+
+    standard_ratio = get_standard_ratio(predictions, "bert")
+
+    print(results)
+    store_results(input_clauses, results, json_object['title'].replace(' ', ''), "tfm")
+
+    """""""""""""""get indices for worth reading clauses"""""""""""""""
+    worth_indices = []
+    for i in range(len(results)):
+        if results[i] == "worth_reading":
+            worth_indices.append(i)
+
+    clauses_json = json.loads(clauses_to_json_string(input_clauses, worth_indices))
+    clauses_json['standard_ratio'] = standard_ratio
+    print(clauses_json)
+    return clauses_json
+
+

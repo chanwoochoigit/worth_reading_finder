@@ -12,23 +12,8 @@ import tensorflow_hub as hub
 import tensorflow as tf
 from tensorflow.keras.models import save_model, load_model
 from utils import get_bert_model_path, tokenise_clauses, get_max_length_path, max_length_padding, read_predictions, \
-    store_results, take_input, get_standard_ratio
+    store_results, take_input, get_standard_ratio, clauses_to_json_string
 
-
-def clauses_to_json_string(clauses, worth_indices):
-    input_clauses = clauses
-    for i in range(len(input_clauses)):
-        if i in worth_indices:
-            input_clauses[i] = "***"+input_clauses[i]
-
-    result_df = pd.DataFrame(input_clauses, columns=['clause'])
-    result_json = result_df.to_json()
-    try:
-        print("Successfully save final result to json.")
-        print(result_json)
-        return result_json
-    except:
-        print("I/O error: Failed to save final_result to json! Get this shit sorted.")
 
 def analyse(json_string):
 
