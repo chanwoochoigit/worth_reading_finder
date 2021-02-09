@@ -24,8 +24,8 @@ def clauses_to_json_string(clauses, worth_indices):
     result_df = pd.DataFrame(input_clauses, columns=['clause'])
     result_json = result_df.to_json()
     try:
-        print("Successfully save final result to json.")
-        print(result_json)
+#        print("Successfully save final result to json.")
+#        print(result_json)
         return result_json
     except:
         print("I/O error: Failed to save final_result to json! Get this shit sorted.")
@@ -54,15 +54,15 @@ def analyse(json_string):
 
     input_clauses = []
     for line in policy_text.split('\n'):
-        if line != '' and line.isspace() is False:
+        if line != '' and line != '\n' and line.isspace() is False:
             input_clauses.append(line)
 
-    print(input_clauses[7])
+#    print(input_clauses[7])
 
     """""""""""""""""""""""""""""""get maximum clause length for test data"""""""""""""""""""""""""""""""
     with open(get_max_length_path(alertness), "r") as max_len_file:
         max_len = int(max_len_file.read()[-3:])
-    print(max_len)
+#    print(max_len)
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
     """""""""""""""""""""""""""download and load bert tokeniser + vocabulary"""""""""""""""""""""""""""
@@ -82,9 +82,9 @@ def analyse(json_string):
 
     model = load_model(get_bert_model_path(alertness))
     predictions = model.predict(x=padded_clauses)
-    print(predictions)
+#    print(predictions)
     results = read_predictions(predictions, "bert")
-    print(results)
+#    print(results)
     store_results(input_clauses, results, json_object['title'].replace(' ',''), "bert")
 
     standard_ratio = get_standard_ratio(predictions, "bert")
@@ -97,7 +97,7 @@ def analyse(json_string):
 
     clauses_json = json.loads(clauses_to_json_string(input_clauses, worth_indices))
     clauses_json['standard_ratio'] = standard_ratio
-    print(clauses_json)
+#    print(clauses_json)
     return clauses_json
 
 

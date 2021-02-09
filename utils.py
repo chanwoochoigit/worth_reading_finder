@@ -27,22 +27,22 @@ def encode_binary_labels(y):
     return encoded_labels
 
 def get_npy_path(alertness, filename):
-    return "training_data/"+alertness+"/"+filename+"_"+alertness+".npy"
+    return "/root/worth_reading_finder/training_data/"+alertness+"/"+filename+"_"+alertness+".npy"
 
 def get_bin_path(alertness, name):
-    return "training_data/"+alertness+"/"+name+"_"+alertness+".bin"
+    return "/root/worth_reading_finder/training_data/"+alertness+"/"+name+"_"+alertness+".bin"
 
 def get_bow_model_path(alertness):
-    return "models/"+alertness+"_model/"+alertness+"_model_bow"
+    return "/root/worth_reading_finder/models/"+alertness+"_model/"+alertness+"_model_bow"
 
 def get_bert_model_path(alertness):
-    return "models/"+alertness+"_model/"+alertness+"_model_bert"
+    return "/root/worth_reading_finder/models/"+alertness+"_model/"+alertness+"_model_bert"
 
 def get_tfm_model_path(alertness):
-    return "models/"+alertness+"_model/"+alertness+"_model_tfm"
+    return "/root/worth_reading_finder/models/"+alertness+"_model/"+alertness+"_model_tfm"
 
 def get_max_length_path(alertness):
-    return "models/"+alertness+"_model/"+alertness+"_model_bert/max_clause_len.txt"
+    return "/root/worth_reading_finder/models/"+alertness+"_model/"+alertness+"_model_bert/max_clause_len.txt"
 
 def get_max_length(x_data):
     max_length = 0
@@ -64,7 +64,7 @@ def max_length_padding(tokenised_clauses, max_length=0):
             padded_clause.append(0)
         padded_clauses.append(padded_clause)
     padded_clauses = list_2d_to_nparray(padded_clauses)
-    print(padded_clauses.shape)
+#    print(padded_clauses.shape)
 
     return padded_clauses
 
@@ -93,7 +93,7 @@ def read_predictions(predictions, mode):
             else:
                 exit("Wrong input suspected!")
         how_important = round(worth_counter / (standard_counter + worth_counter),4) * 100
-        print("Ratio of worth reading clauses: "+str(how_important)+"%")
+#        print("Ratio of worth reading clauses: "+str(how_important)+"%")
     elif mode == "bert":
         for pred in predictions:
             if pred[0] < 0.5:
@@ -105,7 +105,7 @@ def read_predictions(predictions, mode):
             else:
                 exit("Wrong input suspected!")
         how_important = round(worth_counter / (standard_counter + worth_counter), 4) * 100
-        print("Ratio of worth reading clauses: " + str(how_important) + "%")
+#        print("Ratio of worth reading clauses: " + str(how_important) + "%")
     else:
         exit("Wrong mode selection!")
     return np.array(results)
@@ -123,7 +123,7 @@ def get_standard_ratio(predictions, mode):
             else:
                 exit("Wrong input suspected!")
         how_important = round(worth_counter / (standard_counter + worth_counter),4) * 100
-        print("Ratio of worth reading clauses: "+str(how_important)+"%")
+#        print("Ratio of worth reading clauses: "+str(how_important)+"%")
     elif mode == "bert":
         for pred in predictions:
             if pred[0] < 0.5:
@@ -133,7 +133,7 @@ def get_standard_ratio(predictions, mode):
             else:
                 exit("Wrong input suspected!")
         how_standard = round(standard_counter / (standard_counter + worth_counter), 4) * 100
-        print("Ratio of standard clauses: " + str(how_standard) + "%")
+#        print("Ratio of standard clauses: " + str(how_standard) + "%")
     else:
         exit("Wrong mode selection!")
     return how_standard
@@ -142,7 +142,7 @@ def store_results(document, results, filename, mode):
     classified_df = pd.DataFrame()
     classified_df['clause'] = document
     classified_df['class'] = results
-    classified_df.to_csv("results/"+filename+'_classified_result_'+mode+'.csv')
+    classified_df.to_csv("/root/worth_reading_finder/results/"+filename+'_classified_result_'+mode+'.csv')
 
 def check_shape_compliance(data):
     len_list = []
