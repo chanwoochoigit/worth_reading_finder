@@ -58,7 +58,6 @@ def analyse(json_string):
             input_clauses.append(line)
 
 #    print(input_clauses[7])
-
     """""""""""""""""""""""""""""""get maximum clause length for test data"""""""""""""""""""""""""""""""
     with open(get_max_length_path(alertness), "r") as max_len_file:
         max_len = int(max_len_file.read()[-3:])
@@ -96,7 +95,9 @@ def analyse(json_string):
             worth_indices.append(i)
 
     clauses_json = json.loads(clauses_to_json_string(input_clauses, worth_indices))
-    clauses_json['standard_ratio'] = standard_ratio
+    clauses_json['sensitivity'] = str(alertness)
+    clauses_json['standard_ratio'] = str(standard_ratio)
+    clauses_json = json.dumps(clauses_json)
 #    print(clauses_json)
     return clauses_json
 
